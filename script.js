@@ -30,14 +30,33 @@ if (navigator.geolocation) {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
-      //add coords here
-      L.marker(coords)
-        .addTo(map)
-        .bindPopup('A pretty CSS3 popup.<br> Easily customizable.')
-        .openPopup();
+
+      //Add event listener to map
+      map.on('click', function (mapEvent) {
+        console.log(mapEvent);
+        //destructure coordinates from click event
+        const { lat, lng } = mapEvent.latlng;
+
+        //add coords here
+        // set options to popup L.popup (object of options from documentation)
+        L.marker([lat, lng])
+          .addTo(map)
+          .bindPopup(
+            L.popup({
+              maxWidth: 250,
+              minWidth: 100,
+              autoClose: false,
+              closeOnClick: false,
+              className: 'running-popup',
+            })
+          )
+          .setPopupContent('Workout')
+          .openPopup();
+      });
     },
     function () {
       alert('Could not get your location');
     }
   );
 }
+// DISPLAY MAP MARKER
