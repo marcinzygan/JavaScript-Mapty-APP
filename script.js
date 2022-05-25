@@ -3,13 +3,6 @@
 // prettier-ignore
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-const form = document.querySelector('.form');
-const containerWorkouts = document.querySelector('.workouts');
-const inputType = document.querySelector('.form__input--type');
-const inputDistance = document.querySelector('.form__input--distance');
-const inputDuration = document.querySelector('.form__input--duration');
-const inputCadence = document.querySelector('.form__input--cadence');
-const inputElevation = document.querySelector('.form__input--elevation');
 // CLASS WORKOUT
 class Workout {
   date = new Date();
@@ -56,6 +49,15 @@ const cycle = new Cycling([34, -12], 3.2, 64, 122);
 console.log(run, cycle);
 
 ////////////////////////////////////////// APPLICATION ARCHITECTURE /////////////////////////////////////////
+
+const form = document.querySelector('.form');
+const containerWorkouts = document.querySelector('.workouts');
+const inputType = document.querySelector('.form__input--type');
+const inputDistance = document.querySelector('.form__input--distance');
+const inputDuration = document.querySelector('.form__input--duration');
+const inputCadence = document.querySelector('.form__input--cadence');
+const inputElevation = document.querySelector('.form__input--elevation');
+
 // CLASS APP
 class App {
   #map;
@@ -113,19 +115,41 @@ class App {
     inputCadence.closest('.form__row ').classList.toggle('form__row--hidden');
   }
   _newWorkout(e) {
+    //helper function to validate if number is not infinity
+    const validInputs = (...inputs) =>
+      inputs.every(inp => Number.isFinite(inp));
+
     //prevent default to not reload page
     e.preventDefault();
+    //GET DATA FROM FORM
+    const type = inputType.value;
+    // the value is a string conver it to number +
+    const distance = +inputDistance.value;
+    const duration = +inputDuration.value;
+    console.log(inputDistance);
 
+    //If workout is running create running object
+    if (type === 'running') {
+      const cadence = +inputCadence.value;
+      //Check if data is valid (number is not infinity)
+      if (
+        // !Number.isFinite(distance) ||
+        // !Number.isFinite(duration) ||
+        // !Number.isFinite(cadence)
+        !validInputs(distance, duration, cadence)
+      )
+        return alert('inputs have to be a positive numbers !');
+    }
+    //If workout is cycling create cycling object
+    if (type === 'cycling') {
+      const elevation = +inputElevation.value;
+    }
     //Clear input fields
-    inputCadence.value =
-      inputDistance.value =
-      inputDuration.value =
-      inputElevation.value =
-        '';
-    // DISPLAY MAP MARKER
+    //Add new object to object arrey
+
+    //RENDER WORKOUT ON A MAP AS A MARKER
     //destructure coordinates from click event
     const { lat, lng } = this.#mapEvent.latlng;
-
     //add coords here
     // set options to popup L.popup (object of options from documentation)
     L.marker([lat, lng])
@@ -141,6 +165,12 @@ class App {
       )
       .setPopupContent('Workout')
       .openPopup();
+    //CLEAR INPUT FIELDS
+    inputCadence.value =
+      inputDistance.value =
+      inputDuration.value =
+      inputElevation.value =
+        '';
   }
 }
 const app = new App();
