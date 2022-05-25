@@ -10,11 +10,57 @@ const inputDistance = document.querySelector('.form__input--distance');
 const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
+// CLASS WORKOUT
+class Workout {
+  date = new Date();
+  // current time stamp
+  id = (Date.now() + '').slice(-10);
+  ///// CONSTRUCTOR //////
+  constructor(coords, distance, duration) {
+    this.coords = coords; // [lat ,lng]
+    this.distance = distance; // in km
+    this.duration = duration; // in min
+  }
+}
+//CLASS RUNNING
+class Running extends Workout {
+  ///// CONSTRUCTOR //////
+  constructor(coords, distance, duration, cadence) {
+    super(coords, distance, duration);
+    this.cadence = cadence;
+    this.calcPace();
+  }
+  //METHODS
+  calcPace() {
+    //min/km
+    this.pace = this.duration / this.distance;
+    return this.pace;
+  }
+}
+// CLASS CYCLING
+class Cycling extends Workout {
+  ///// CONSTRUCTOR //////
+  constructor(coords, distance, duration, elevationGain) {
+    super(coords, distance, duration);
+    this.elevationGain = elevationGain;
+    this.calcSpeed();
+  }
+  //METHODS
+  calcSpeed() {
+    this.speed = this.distance / (this.duration / 60);
+    return this.speed;
+  }
+}
+const run = new Running([34, -12], 5.2, 24, 178);
+const cycle = new Cycling([34, -12], 3.2, 64, 122);
+console.log(run, cycle);
 
+////////////////////////////////////////// APPLICATION ARCHITECTURE /////////////////////////////////////////
 // CLASS APP
 class App {
   #map;
   #mapEvent;
+  ///// CONSTRUCTOR //////
   constructor() {
     //call the get position function as soon the object is created
     this._getPosition();
@@ -23,6 +69,7 @@ class App {
     //Event for form input select options
     inputType.addEventListener('change', this._toggleElevationField);
   }
+  ///// METHODS //////
   // SETTING GEOLOCATION request and check if that is supported by older web browsers with if statement
   _getPosition() {
     if (navigator.geolocation) {
