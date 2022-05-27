@@ -17,6 +17,7 @@ class Workout {
 }
 //CLASS RUNNING
 class Running extends Workout {
+  type = 'running';
   ///// CONSTRUCTOR //////
   constructor(coords, distance, duration, cadence) {
     super(coords, distance, duration);
@@ -32,6 +33,7 @@ class Running extends Workout {
 }
 // CLASS CYCLING
 class Cycling extends Workout {
+  type = 'cycling';
   ///// CONSTRUCTOR //////
   constructor(coords, distance, duration, elevationGain) {
     super(coords, distance, duration);
@@ -44,9 +46,9 @@ class Cycling extends Workout {
     return this.speed;
   }
 }
-const run = new Running([34, -12], 5.2, 24, 178);
-const cycle = new Cycling([34, -12], 3.2, 64, 122);
-console.log(run, cycle);
+// const run = new Running([34, -12], 5.2, 24, 178);
+// const cycle = new Cycling([34, -12], 3.2, 64, 122);
+// console.log(run, cycle);
 
 ////////////////////////////////////////// APPLICATION ARCHITECTURE /////////////////////////////////////////
 
@@ -62,6 +64,7 @@ const inputElevation = document.querySelector('.form__input--elevation');
 class App {
   #map;
   #mapEvent;
+  #workouts = [];
   ///// CONSTRUCTOR //////
   constructor() {
     //call the get position function as soon the object is created
@@ -118,6 +121,8 @@ class App {
     //helper function to validate if number is not infinity
     const validInputs = (...inputs) =>
       inputs.every(inp => Number.isFinite(inp));
+    // helper function to check if number is not a negative number
+    const allPositive = (...inputs) => inputs.every(inp => inp > 0);
 
     //prevent default to not reload page
     e.preventDefault();
@@ -126,45 +131,38 @@ class App {
     // the value is a string conver it to number +
     const distance = +inputDistance.value;
     const duration = +inputDuration.value;
-    console.log(inputDistance);
-
+    const { lat, lng } = this.#mapEvent.latlng;
+    let workout;
     //If workout is running create running object
     if (type === 'running') {
       const cadence = +inputCadence.value;
       //Check if data is valid (number is not infinity)
+      console.log(!allPositive(distance, duration, cadence));
       if (
-        // !Number.isFinite(distance) ||
-        // !Number.isFinite(duration) ||
-        // !Number.isFinite(cadence)
-        !validInputs(distance, duration, cadence)
+        !validInputs(distance, duration, cadence) ||
+        !allPositive(distance, duration, cadence)
       )
         return alert('inputs have to be a positive numbers !');
+      //Add new object to workouts array
+      workout = new Running([lat, lng], distance, duration, cadence);
     }
     //If workout is cycling create cycling object
     if (type === 'cycling') {
       const elevation = +inputElevation.value;
+      if (
+        !validInputs(distance, duration, elevation) ||
+        !allPositive(distance, duration)
+      )
+        return alert('inputs have to be a positive numbers !');
+      //Add new object to workouts array
+      workout = new Cycling([lat, lng], distance, duration, elevation);
     }
-    //Clear input fields
-    //Add new object to object arrey
 
     //RENDER WORKOUT ON A MAP AS A MARKER
-    //destructure coordinates from click event
-    const { lat, lng } = this.#mapEvent.latlng;
+
     //add coords here
     // set options to popup L.popup (object of options from documentation)
-    L.marker([lat, lng])
-      .addTo(this.#map)
-      .bindPopup(
-        L.popup({
-          maxWidth: 250,
-          minWidth: 100,
-          autoClose: false,
-          closeOnClick: false,
-          className: 'running-popup',
-        })
-      )
-      .setPopupContent('Workout')
-      .openPopup();
+    this.renderWorkoutMarker(workout);
     //CLEAR INPUT FIELDS
     inputCadence.value =
       inputDistance.value =
@@ -172,5 +170,22 @@ class App {
       inputElevation.value =
         '';
   }
+
+  renderWorkoutMarker(workout) {
+    L.marker(workout.coords)
+      .addTo(this.#map)
+      .bindPopup(
+        L.popup({
+          maxWidth: 250,
+          minWidth: 100,
+          autoClose: false,
+          closeOnClick: false,
+          className: `${workout.type}-popup`,
+        })
+      )
+      .setPopupContent('workout.distance')
+      .openPopup();
+  }
 }
+
 const app = new App();
