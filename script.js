@@ -72,16 +72,23 @@ const inputElevation = document.querySelector('.form__input--elevation');
 // CLASS APP
 class App {
   #map;
+  #mapZoomLevel = 13;
   #mapEvent;
   #workouts = [];
-  ///// CONSTRUCTOR //////
+  ///// CONSTRUCTOR ////// THIS WILL EXECUTE AS APPLICATION LOADS
   constructor() {
     //call the get position function as soon the object is created
     this._getPosition();
+
+    //EVENT HANDLERS
     //FORM EVENT LISTNER to display marker , bind this keyword to App object
     form.addEventListener('submit', this._newWorkout.bind(this));
     //Event for form input select options
     inputType.addEventListener('change', this._toggleElevationField);
+    //add event listner to workouts container
+    containerWorkouts.addEventListener('click', this._moveToWorkout.bind(this));
+    //GET LOCAL STORAGE
+    this._getLocalStorage();
   }
   ///// METHODS //////
   // SETTING GEOLOCATION request and check if that is supported by older web browsers with if statement
@@ -100,13 +107,12 @@ class App {
     //destructure the position.coords.latitude and save is as a varible .
     const { latitude } = position.coords;
     const { longitude } = position.coords;
-    console.log(`https://www.google.co.uk/maps/@${latitude},${longitude}`);
 
     //USE LEAFLET    external library to show map based on our geo location
     // need id map in our HTML("map")
     //Create array of coordinates
     const coords = [latitude, longitude];
-    this.#map = L.map('map').setView(coords, 13);
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution:
@@ -115,6 +121,10 @@ class App {
 
     //Add event listener to map with mapE to get clicked lat and lng and assign it to global varible so we can use it outisde function , bind this keyword to App object
     this.#map.on('click', this._showForm.bind(this));
+    //RENDER MARKERS FROM LOCAL STORAGE AFTER MAP IS LOADED
+    this.#workouts.forEach(workout => {
+      this._renderWorkoutMarker(workout);
+    });
   }
   _showForm(mapE) {
     this.#mapEvent = mapE;
@@ -176,11 +186,14 @@ class App {
       //Add new object to workouts array
       workout = new Cycling([lat, lng], distance, duration, elevation);
     }
-    console.log(workout);
+
+    this.#workouts.push(workout);
     this._renderWorkoutMarker(workout);
     this._renderWorkout(workout);
     //CLEAR INPUT FIELDS AND HIDE FORM
-    this._hideForm(workout);
+    this._hideForm();
+    //SET LOCAL STORAGE TO ALL WORKOUTS
+    this._setLocalStorage();
   }
 
   //RENDER WORKOUT ON A MAP AS A MARKER
@@ -249,6 +262,35 @@ class App {
       </div>
     </li>`;
     form.insertAdjacentHTML('afterend', html);
+  }
+  _moveToWorkout(e) {
+    const workoutEl = e.target.closest('.workout');
+    if (!workoutEl) return;
+
+    const workout = this.#workouts.find(
+      work => work.id === workoutEl.dataset.id
+    );
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      animate: true,
+      pan: { duration: 1 },
+    });
+  }
+
+  _setLocalStorage() {
+    localStorage.setItem('workout', JSON.stringify(this.#workouts));
+  }
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workout'));
+
+    if (!data) return;
+    this.#workouts = data;
+    this.#workouts.forEach(workout => {
+      this._renderWorkout(workout);
+    });
+  }
+  reset() {
+    localStorage.removeItem('workout');
+    location.reload(); //reloads page
   }
 }
 
